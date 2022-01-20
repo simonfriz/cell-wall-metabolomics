@@ -1,0 +1,65 @@
+FeatureFinder
+
+b'debug = ' false
+b'intensity:bins = ' 10
+b'mass_trace:mz_tolerance = ' 0.03
+b'mass_trace:min_spectra = ' 10
+b'mass_trace:max_missing = ' 1
+b'mass_trace:slope_bound = ' 0.1
+b'isotopic_pattern:charge_low = ' 1
+b'isotopic_pattern:charge_high = ' 4
+b'isotopic_pattern:mz_tolerance = ' 0.03
+b'isotopic_pattern:intensity_percentage = ' 10.0
+b'isotopic_pattern:intensity_percentage_optional = ' 0.1
+b'isotopic_pattern:optional_fit_improvement = ' 2.0
+b'isotopic_pattern:mass_window_width = ' 25.0
+b'isotopic_pattern:abundance_12C = ' 98.93
+b'isotopic_pattern:abundance_14N = ' 99.632
+b'seed:min_score = ' 0.8
+b'fit:max_iterations = ' 500
+b'feature:min_score = ' 0.7
+b'feature:min_isotope_fit = ' 0.8
+b'feature:min_trace_score = ' 0.5
+b'feature:min_rt_span = ' 0.333
+b'feature:max_rt_span = ' 2.5
+b'feature:rt_shape = ' symmetric
+b'feature:max_intersection = ' 0.35
+b'feature:reported_mz = ' monoisotopic
+b'user-seed:rt_tolerance = ' 5.0
+b'user-seed:mz_tolerance = ' 1.1
+b'user-seed:min_score = ' 0.5
+b'debug:pseudo_rt_shift = ' 500.0
+
+FeatureGrouper
+
+b'use_identifications' false
+b'nr_partitions' 100
+b'min_nr_diffs_per_bin' 50
+b'min_IDscore_forTolCalc' 1.0
+b'noID_penalty' 0.0
+b'ignore_charge' false
+b'ignore_adduct' true
+b'distance_RT:max_difference' 100.0
+b'distance_RT:exponent' 1.0
+b'distance_RT:weight' 1.0
+b'distance_MZ:max_difference' 0.3
+b'distance_MZ:unit' Da
+b'distance_MZ:exponent' 2.0
+b'distance_MZ:weight' 1.0
+b'distance_intensity:exponent' 1.0
+b'distance_intensity:weight' 0.0
+b'distance_intensity:log_transform' disabled
+
+AccurateMassSearch
+
+b'mass_error_value' 5.0
+b'mass_error_unit' ppm
+b'ionization_mode' positive
+b'isotopic_similarity' false
+b'positive_adducts' CHEMISTRY/PositiveAdducts.tsv
+b'negative_adducts' CHEMISTRY/NegativeAdducts.tsv
+b'use_feature_adducts' false
+b'keep_unidentified_masses' false
+b'db:mapping' [b'CHEMISTRY/HMDBMappingFile.tsv']
+b'db:struct' [b'CHEMISTRY/HMDB2StructMapping.tsv']
+b'mzTab:exportIsotopeIntensities' false
