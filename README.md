@@ -1,2 +1,2 @@
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/axelwalter/cell-wall-metabolomics/tree/main/HEAD)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/axelwalter/cell-wall-metabolomics.git/HEAD)
 # Cell Wall Metabolomics with pyOpenMS
