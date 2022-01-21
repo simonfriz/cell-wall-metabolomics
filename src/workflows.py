@@ -1,7 +1,7 @@
 from .processing import *
 from .analysis import *
 
-def id_by_accurate_mass(mzML_directory, polarity):
+def id_by_accurate_mass(mzML_directory, polarity, remove_qbic=True):
     """Processes all mzML files in given directory.
 
     - Filter RTs
@@ -26,14 +26,14 @@ def id_by_accurate_mass(mzML_directory, polarity):
     """
     fms = []
 
-    for mzML_file in os.listdir(mzML_directory):
+    for mzML_file in [file for file in os.listdir(mzML_directory) if file.endswith('.mzML')]:
 
         exp = load_experiment(os.path.join(mzML_directory, mzML_file))
 
         exp = filter_experiment(exp, start = 120, end = 550)
 
         fm = feature_detection(exp, mzML_file_name=mzML_file,
-                                mtd_params={"mass_error_ppm": 10.0,
+                                mtd_params={"mass_error_ppm": 10.0, # default: 10
                                     "noise_threshold_int": 3000.0
                                     },
                                 epd_params={"width_filtering": "fixed"
@@ -48,11 +48,11 @@ def id_by_accurate_mass(mzML_directory, polarity):
 
         fms.append(fm)
 
-    fms = map_alignment(fms)
+    # fms = map_alignment(fms)
 
-    cm = feature_linking(fms, params = {"distance_MZ:unit": 'ppm',
-                                        "distance_MZ:max_difference": 10.0,
-                                        "distance_RT:max_difference": 20.0
+    cm = feature_linking(fms, params = {"distance_MZ:unit": 'ppm', # default: ppm
+                                        "distance_MZ:max_difference": 10.0, # default: 10
+                                        "distance_RT:max_difference": 20.0 # default: 20
                                         })
 
     ams_df = accurate_mass_search(cm, params = {'ionization_mode': polarity,
@@ -60,8 +60,8 @@ def id_by_accurate_mass(mzML_directory, polarity):
                                                 'negative_adducts': 'data/AccurateMassSearch/negative_adducts.tsv',
                                                 'db:mapping': ['data/AccurateMassSearch/pgn_maps.tsv'],
                                                 'db:struct': ['data/AccurateMassSearch/pgn_structs.tsv'],
-                                                'mass_error_unit': 'ppm',
-                                                'mass_error_value': 5.0
+                                                'mass_error_unit': 'ppm', # default: ppm
+                                                'mass_error_value': 5.0 # default: 5
                                                 })
     cm_df = cm.get_df()
 
@@ -71,6 +71,7 @@ def id_by_accurate_mass(mzML_directory, polarity):
 
     df = group_metabolites_by_id(df)
 
-    df.columns = ['_'.join(c.split('_')[1:]) for c in df.columns]
+    if remove_qbic:
+        df.columns = ['_'.join(c.split('_')[1:]) for c in df.columns]
 
     return df
