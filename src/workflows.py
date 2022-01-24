@@ -34,12 +34,12 @@ def id_by_accurate_mass(mzML_directory, polarity, remove_qbic=True):
         exp = filter_experiment(exp, start=120, end=550)
 
         fm = feature_detection(exp, mzML_file_name=mzML_file,
-                               mtd_params={"mass_error_ppm": 10.0,  # default: 10
+                               mtd_custom_params={"mass_error_ppm": 10.0,  # default: 10
                                            "noise_threshold_int": 3000.0
                                            },
-                               epd_params={"width_filtering": "fixed"
+                               epd__custom_params={"width_filtering": "fixed"
                                            },
-                               ffm_params={"isotope_filtering_model": "none",
+                               ffm__customparams={"isotope_filtering_model": "none",
                                            "remove_single_traces": "true",
                                            "mz_scoring_by_elements": "false",
                                            "report_convex_hulls": "true"

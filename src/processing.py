@@ -80,7 +80,7 @@ def filter_experiment(exp, start=0, end=-1):
     return exp
 
 
-def feature_detection(exp, mtd_params={}, epd_params={}, ffm_params={}, mzML_file_name=''):
+def feature_detection(exp, mtd_custom_params={}, epd_custom_params={}, ffm_custom_params={}, mzML_file_name=''):
     """Feature detection with the FeatureFinderMetabo.
 
     Parameters
@@ -93,6 +93,8 @@ def feature_detection(exp, mtd_params={}, epd_params={}, ffm_params={}, mzML_fil
         Custom parameters for ElutionPeakDetection.
     ffm_params : dict
         Custom parameters for FeatureFinderMetabo.
+    mzML_file_name : str
+        Path to experiment mzML file to set as PrimaryMSRunPath in FeatureMap.
 
     Returns
     -------
@@ -102,19 +104,19 @@ def feature_detection(exp, mtd_params={}, epd_params={}, ffm_params={}, mzML_fil
     exp.sortSpectra(True)
     mass_traces = []
     mtd = MassTraceDetection()
-    mtd_par = mtd.getDefaults()
-    for k, v in mtd_params.items():
-        mtd_par.setValue(k, v)
-    mtd.setParameters(mtd_par)
+    mtd_params = mtd.getDefaults()
+    for k, v in mtd_custom_params.items():
+        mtd_params.setValue(k, v)
+    mtd.setParameters(mtd_params)
     mtd.run(exp, mass_traces, 0)
 
     mass_traces_split = []
     mass_traces_final = []
     epd = ElutionPeakDetection()
-    epd_par = epd.getDefaults()
-    for k, v in epd_params.items():
-        epd_par.setValue(k, v)
-    epd.setParameters(epd_par)
+    epd_params = epd.getDefaults()
+    for k, v in epd_custom_params.items():
+        epd_params.setValue(k, v)
+    epd.setParameters(epd_params)
     epd.detectPeaks(mass_traces, mass_traces_split)
 
     if (epd.getParameters().getValue("width_filtering") == "auto"):
@@ -125,10 +127,10 @@ def feature_detection(exp, mtd_params={}, epd_params={}, ffm_params={}, mzML_fil
     feature_map_FFM = FeatureMap()
     feat_chrom = []
     ffm = FeatureFindingMetabo()
-    ffm_par = ffm.getDefaults()
-    for k, v in ffm_params.items():
-        ffm_par.setValue(k, v)
-    ffm.setParameters(ffm_par)
+    ffm_params = ffm.getDefaults()
+    for k, v in ffm_custom_params.items():
+        ffm_params.setValue(k, v)
+    ffm.setParameters(ffm_params)
     ffm.run(mass_traces_final, feature_map_FFM, feat_chrom)
     feature_map_FFM.setUniqueIds()
     feature_map_FFM.setPrimaryMSRunPath([mzML_file_name.encode()])
