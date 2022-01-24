@@ -13,12 +13,13 @@ def _get_mzML_name_from_fm(fm):
         name = run_path[0].decode('utf-8')
     else:
         name = 'no name'
-    
+
     return name
+
 
 def load_experiment(path_to_mzML):
     """Loads a MSExperiment from file.
-    
+
     Parameters
     ----------
     path_to_mzML : str
@@ -36,12 +37,12 @@ def load_experiment(path_to_mzML):
 
 # def centroid(exp_raw):
 #     """Centroids a MSExperiment with PeakPickerHiRes.
-    
+
 #     Parameters
 #     ----------
 #     exp_raw : pyopenms.MSExperiment
 #         Raw MSExperiment with profile or centroid data.
-    
+
 #     Returns
 #     -------
 #     pyopenms.MSExperiment
@@ -51,9 +52,10 @@ def load_experiment(path_to_mzML):
 #     PeakPickerHiRes().pickExperiment(exp_raw, exp_centroid)
 #     return exp_centroid
 
-def filter_experiment(exp, start = 0, end = -1):
+
+def filter_experiment(exp, start=0, end=-1):
     """Filters a MSExperiment by RT to remove start and end fractions.py
-    
+
     Parameters
     ----------
     exp : pyopenms.MSExperiment
@@ -72,11 +74,13 @@ def filter_experiment(exp, start = 0, end = -1):
     spectra = exp.getSpectra()
     if end == -1:
         end = spectra[-1].getRT()
-    exp.setSpectra([spec for spec in exp.getSpectra() if spec.getRT() > start and spec.getRT() < end])
+    exp.setSpectra([spec for spec in exp.getSpectra()
+                   if spec.getRT() > start and spec.getRT() < end])
 
     return exp
 
-def feature_detection(exp, mtd_params = {}, epd_params = {}, ffm_params = {}, mzML_file_name = ''):
+
+def feature_detection(exp, mtd_params={}, epd_params={}, ffm_params={}, mzML_file_name=''):
     """Feature detection with the FeatureFinderMetabo.
 
     Parameters
@@ -112,16 +116,16 @@ def feature_detection(exp, mtd_params = {}, epd_params = {}, ffm_params = {}, mz
         epd_par.setValue(k, v)
     epd.setParameters(epd_par)
     epd.detectPeaks(mass_traces, mass_traces_split)
-    
+
     if (epd.getParameters().getValue("width_filtering") == "auto"):
-            epd.filterByPeakWidth(mass_traces_split, mass_traces_final)
+        epd.filterByPeakWidth(mass_traces_split, mass_traces_final)
     else:
-            mass_traces_final = mass_traces_split
+        mass_traces_final = mass_traces_split
 
     feature_map_FFM = FeatureMap()
     feat_chrom = []
     ffm = FeatureFindingMetabo()
-    ffm_par = ffm.getDefaults() 
+    ffm_par = ffm.getDefaults()
     for k, v in ffm_params.items():
         ffm_par.setValue(k, v)
     ffm.setParameters(ffm_par)
@@ -131,16 +135,17 @@ def feature_detection(exp, mtd_params = {}, epd_params = {}, ffm_params = {}, mz
 
     return feature_map_FFM
 
+
 def filter_feature_map(fm, q):
     """Filter a FeatureMap by given quality threshold.
-    
+
     Parameters
     ----------
     fm : pyopenms.FeatureMap
         Unfiltered FeatureMap.
     q : float
         Quality threshold for features.
-    
+
     Returns
     -------
     pyopenms.FeatureMap
@@ -159,9 +164,10 @@ def filter_feature_map(fm, q):
 
     return fm_filtered
 
-def map_alignment(fms, visualize = False):
+
+def map_alignment(fms, visualize=False):
     """Align RTs of features in FeatureMaps.
-    
+
     Parameters
     ----------
     fms : list of pyopenms.FeatureMap
@@ -174,8 +180,9 @@ def map_alignment(fms, visualize = False):
     list of pyopenms.FeatureMap
         FeatureMaps with aligned RTs.
     """
-    #set ref_index to feature map index with largest number of features
-    ref_index = [i[0] for i in sorted(enumerate([fm.size() for fm in fms]), key=lambda x:x[1])][-1]
+    # set ref_index to feature map index with largest number of features
+    ref_index = [i[0] for i in sorted(
+        enumerate([fm.size() for fm in fms]), key=lambda x:x[1])][-1]
 
     aligner = MapAlignmentAlgorithmPoseClustering()
 
@@ -186,12 +193,13 @@ def map_alignment(fms, visualize = False):
         trafo = TransformationDescription()
         aligner.align(fm, trafo)
         transformer = MapAlignmentTransformer()
-        transformer.transformRetentionTimes(fm, trafo, True) # store original RT as meta value
+        # store original RT as meta value
+        transformer.transformRetentionTimes(fm, trafo, True)
 
     if visualize:
         fmaps = [fms[ref_index]] + fms[:ref_index] + fms[ref_index+1:]
 
-        fig = plt.figure(figsize=(10,5))
+        fig = plt.figure(figsize=(10, 5))
 
         ax = fig.add_subplot(1, 2, 1)
         ax.set_title('consensus map before alignment')
@@ -200,30 +208,32 @@ def map_alignment(fms, visualize = False):
 
         # use alpha value to display feature intensity
         ax.scatter([f.getRT() for f in fmaps[0]], [f.getMZ() for f in fmaps[0]],
-                    alpha = np.asarray([f.getIntensity() for f in fmaps[0]])/max([f.getIntensity() for f in fmaps[0]]))
+                   alpha=np.asarray([f.getIntensity() for f in fmaps[0]])/max([f.getIntensity() for f in fmaps[0]]))
 
         for fm in fmaps[1:]:
             ax.scatter([f.getMetaValue('original_RT') for f in fm], [f.getMZ() for f in fm],
-                        alpha = np.asarray([f.getIntensity() for f in fm])/max([f.getIntensity() for f in fm]))
+                       alpha=np.asarray([f.getIntensity() for f in fm])/max([f.getIntensity() for f in fm]))
 
-        ax = fig.add_subplot(1,2,2)
+        ax = fig.add_subplot(1, 2, 2)
         ax.set_title('consensus map after alignment')
         ax.set_xlabel('RT')
 
         for fm in fmaps:
             ax.scatter([f.getRT() for f in fm], [f.getMZ() for f in fm],
-                        alpha = np.asarray([f.getIntensity() for f in fm])/max([f.getIntensity() for f in fm]))
+                       alpha=np.asarray([f.getIntensity() for f in fm])/max([f.getIntensity() for f in fm]))
 
         fig.tight_layout()
 
-        fig.legend([_get_mzML_name_from_fm(fmap) for fmap in fmaps], loc = 'lower center')
+        fig.legend([_get_mzML_name_from_fm(fmap)
+                   for fmap in fmaps], loc='lower center')
         plt.show()
 
     return fms
 
-def feature_linking(fms, params = {}):
+
+def feature_linking(fms, params={}):
     """Link FeatureMaps to ConsensusMap.
-    
+
     Parameters
     ----------
     fms : list of pyopenms.FeatureMap
@@ -236,7 +246,7 @@ def feature_linking(fms, params = {}):
         ConsensusMap containing all given FeatureMaps.
     """
     feature_grouper = FeatureGroupingAlgorithmQT()
-    
+
     par = feature_grouper.getDefaults()
     for k, v in params.items():
         par.setValue(k, v)
@@ -259,9 +269,10 @@ def feature_linking(fms, params = {}):
 
     return cm
 
-def accurate_mass_search(cm, params = {}):
+
+def accurate_mass_search(cm, params={}):
     """Perform accurate mass search on ConsensusMap.
-    
+
     Parameters
     ----------
     cm : pyopenms.ConsensusMap
