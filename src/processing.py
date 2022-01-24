@@ -1,3 +1,4 @@
+import csv
 import os
 from pyopenms import *
 import matplotlib.pyplot as plt
@@ -87,11 +88,11 @@ def feature_detection(exp, mtd_custom_params={}, epd_custom_params={}, ffm_custo
     ----------
     exp : pyopenms.MSExperiment
         MSExperiment to detect features from.
-    mtd_params : dict
+    mtd_custom_params : dict
         Custom parameters for MassTraceDetection.
-    epd_params : dict
+    epd_custom_params : dict
         Custom parameters for ElutionPeakDetection.
-    ffm_params : dict
+    ffm_custom_params : dict
         Custom parameters for FeatureFinderMetabo.
     mzML_file_name : str
         Path to experiment mzML file to set as PrimaryMSRunPath in FeatureMap.
@@ -136,6 +137,59 @@ def feature_detection(exp, mtd_custom_params={}, epd_custom_params={}, ffm_custo
     feature_map_FFM.setPrimaryMSRunPath([mzML_file_name.encode()])
 
     return feature_map_FFM
+
+def metaboTableFromFile(path_to_library_file):
+    metaboTable = []
+    with open(path_to_library_file, 'r') as tsv_file:
+        tsv_reader = csv.reader(tsv_file, delimiter="\t")
+        next(tsv_reader) # skip header
+        for row in tsv_reader:
+            metaboTable.append(FeatureFinderMetaboIdentCompound(
+                row[0], # name
+                row[1], # sum formula
+                float(row[2]), # mass
+                [int(charge) for charge in row[3].split(',')], # charges
+                [float(rt) for rt in row[4].split(',')], # RTs
+                [float(rt_range) for rt_range in row[5].split(',')], # RT ranges
+                [float(iso_distrib) for iso_distrib in row[6].split(',')] # isotope distributions
+            ))
+    return metaboTable
+
+def feature_detection_ident(exp, mzML_file_name, library_file, ffmid_custom_params = {}):
+    """Feature detection with the FeatureFinderMetaboIdent.
+
+    Parameters
+    ----------
+    exp : pyopenms.MSExperiment
+        MSExperiment to detect features from.
+    mzML_file_name : str
+        Path to experiment mzML file to set as PrimaryMSRunPath in FeatureMap.
+    library_file : str
+        Path to library (tsv file) with compounds to identify.
+    ffmid_custom_params : dict
+        Custom parameters for FeatureFinderMetaboIdent.
+
+    Returns
+    -------
+    pyopenms.FeatureMap
+        FeatureMap with detected features.
+    """
+    exp.sortSpectra(True)
+    fm = FeatureMap()
+
+    metabo_table = metaboTableFromFile(library_file)
+
+    ff = FeatureFinderAlgorithmMetaboIdent()
+    ff.setMSData(exp)
+
+    ffmid_params = ff.getParameters()
+    for k, v in ffmid_custom_params.items():
+        ffmid_params[k] = v
+    ff.setParameters(ffmid_params)
+
+    ff.run(metabo_table, fm, mzML_file_name)
+    
+    return fm
 
 
 def filter_feature_map(fm, q):

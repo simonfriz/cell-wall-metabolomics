@@ -20,27 +20,35 @@ def annotate_cm_df(cm_df, ams_df, keep_unidentified=False):
         ConsensusMap with extra column containing ID name and adduct.
     """
     # create empty columns for ids and adducts
-    cm_df['id'] = pd.Series(['' for _ in range(len(cm_df.index))])
-    cm_df['adduct'] = pd.Series(['' for _ in range(len(cm_df.index))])
+    cm_df["id"] = pd.Series(["" for _ in range(len(cm_df.index))])
+    cm_df["adduct"] = pd.Series(["" for _ in range(len(cm_df.index))])
     # create unique index
     cm_df.index = np.arange(0, len(cm_df.index))
     # loop over ams results and annotate id and adduct in cm_df if mz and rt are within tolerance (basically if they are the same, the floats can differ slightly)
-    for ams_rt, ams_mz, ams_name, ams_adduct in zip(ams_df['retention_time'], ams_df['exp_mass_to_charge'], ams_df['description'], ams_df['opt_global_adduct_ion']):
-        indices = cm_df.index[np.isclose(cm_df['mz'], float(
-            ams_mz), atol=1e-05) & np.isclose(cm_df['RT'], float(ams_rt), atol=1e-05)].tolist()
+    for ams_rt, ams_mz, ams_name, ams_adduct in zip(
+        ams_df["retention_time"],
+        ams_df["exp_mass_to_charge"],
+        ams_df["description"],
+        ams_df["opt_global_adduct_ion"],
+    ):
+        indices = cm_df.index[
+            np.isclose(cm_df["mz"], float(ams_mz), atol=1e-05)
+            & np.isclose(cm_df["RT"], float(ams_rt), atol=1e-05)
+        ].tolist()
         for index in indices:
-            cm_df.loc[index, 'id'] += ams_name + ';'
-            cm_df.loc[index, 'adduct'] += '[' + \
-                ams_adduct.split(';')[0] + ']' + ams_adduct.split(';')[1] + ';'
+            cm_df.loc[index, "id"] += ams_name + ";"
+            cm_df.loc[index, "adduct"] += (
+                "[" + ams_adduct.split(";")[0] + "]" + ams_adduct.split(";")[1] + ";"
+            )
     # remove last : from ids and adducts
-    cm_df['id'] = [item[:-1] if ';' in item else '' for item in cm_df['id']]
-    cm_df['adduct'] = [item[:-1] if ';' in item else '' for item in cm_df['adduct']]
+    cm_df["id"] = [item[:-1] if ";" in item else "" for item in cm_df["id"]]
+    cm_df["adduct"] = [item[:-1] if ";" in item else "" for item in cm_df["adduct"]]
     # remove unnecessary columns sequence and charge
-    cm_df = cm_df.drop(columns=['sequence', 'charge'])
+    cm_df = cm_df.drop(columns=["sequence", "charge"])
 
     if not keep_unidentified:
         # remove features without id
-        cm_df = cm_df[cm_df['id'] != '']
+        cm_df = cm_df[cm_df["id"] != ""]
 
     return cm_df
 
@@ -60,21 +68,16 @@ def filter_df(df, q):
     pandas.DataFrame
         Filtered DataFrame.
     """
-    return df[df['quality'] > 0]
+    return df[df["quality"] > 0]
 
 
-def group_metabolites_by_id(df, group_metabolites=True):
+def group_metabolites_ams(df):
     """Group metabolites in ConsensusMap DataFrame that has been annotated with AccurateMassSearch results.
-
-    If grouped_metabolites = True metabolites with different adducts and/or RTs are grouped together.
-    Features with the same 'id' will be grouped together and their intensities per sample are summed up
 
     Parameters
     ----------
     df : pandas.DataFrame
         Consensus DataFrame that has been annotated with AccurateMassSearch results.
-    group_metabolites : bool
-        Group intensity values of different metabolite adducts and/or RTs.
 
     Returns
     -------
@@ -83,9 +86,33 @@ def group_metabolites_by_id(df, group_metabolites=True):
     """
     # drop mz, RT and quality information, they can't be summed up
     # adduct information will be lost as well (can't sum strings)
-    df = df.drop(columns=['mz', 'RT', 'quality'])
-    df = df.groupby(['id']).sum()
+    df = df.drop(columns=["mz", "RT", "quality"])
+    df = df.groupby(["id"]).sum()
     return df
+
+
+def group_metabolites_ffmid(fms):
+    """Group metabolites in FeatureMaps and sum up intensity.
+
+    Parameters
+    ----------
+    df : list of pyopenms.FeatureMap
+        List of FeatureMaps generated with FeatureFinderMetaboIdent.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing features grouped by metabolite id with summed up intensities.
+    """
+    dfs = []
+    for fm in fms:
+        df = fm.get_df()[["intensity"]]
+        df = df.rename(columns={"intensity": os.path.basename(fm.getMetaValue('spectra_data')[0].decode())[:-5]})
+        df.index = [f.getMetaValue("label").split("#")[0] for f in fm]
+        df = df.groupby(df.index).sum()
+        dfs.append(df)
+
+    return pd.concat(dfs, axis=1).replace(np.NaN, 0)
 
 
 def combine_neg_pos_ids(df_neg, df_pos):
@@ -182,13 +209,14 @@ def get_mean_std_change_df(df, sample_pairs):
 
     for name in [sample for sample_pair in sample_pairs for sample in sample_pair]:
         # add _ to name to exclue wrong matches (eg. C_C would matach C_C_1, C_C_2, C_CF_1, C_CF_2)
-        replicates = [c for c in df.columns if name+'_' in c]
+        replicates = [c for c in df.columns if name + "_" in c]
         df_mean[name] = df[replicates].mean(axis=1)
         df_std[name] = df[replicates].std(axis=1)
 
     for pair in sample_pairs:
-        df_pair = normalize_max(df_mean[[pair[0], pair[1]]]+1)
-        df_change[pair[1]+'/'+pair[0]
-                  ] = np.log2(df_pair[pair[1]] / df_pair[pair[0]])
+        df_pair = normalize_max(df_mean[[pair[0], pair[1]]] + 1)
+        df_change[pair[1] + "/" + pair[0]] = np.log2(
+            df_pair[pair[1]] / df_pair[pair[0]]
+        )
 
     return df_mean, df_std, df_change
