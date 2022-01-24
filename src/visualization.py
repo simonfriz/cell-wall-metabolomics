@@ -1,5 +1,6 @@
-import seaborn as sns 
+import seaborn as sns
 import matplotlib.pyplot as plt
+
 
 def plot_result_df(df):
     """Generate a heatmap from DataFrame with IDs and intensity values per sample
@@ -11,13 +12,15 @@ def plot_result_df(df):
     df : pandas DataFrame
         DataFrame for plotting.
     """
-    chart = sns.heatmap(df, xticklabels=df.columns , yticklabels=df.index, cmap='afmhot_r')
+    chart = sns.heatmap(df, xticklabels=df.columns,
+                        yticklabels=df.index, cmap='afmhot_r')
 
     chart.set_xticklabels(chart.get_xticklabels(), rotation=45)
 
     plt.show()
 
-def plot_intensities(df_mean, df_std, samples = [], metabolites = [], title = '', ylabel=''):
+
+def plot_intensities(df_mean, df_std, samples=[], metabolites=[], title='', ylabel=''):
     """Generate a bar plot with intensity values per metabolite and sample.
 
     Parameters
@@ -41,15 +44,17 @@ def plot_intensities(df_mean, df_std, samples = [], metabolites = [], title = ''
     if metabolites:
         df_mean = df_mean.loc[metabolites]
         df_std = df_std.loc[metabolites]
-    bar = df_mean.plot.bar(yerr = df_std, ecolor = '#555555', capsize=2)
-    bar.ticklabel_format(axis = 'y', style='scientific', scilimits=(0,0), useMathText=True)
+    bar = df_mean.plot.bar(yerr=df_std, ecolor='#555555', capsize=2)
+    bar.ticklabel_format(axis='y', style='scientific',
+                         scilimits=(0, 0), useMathText=True)
     bar.set_xticklabels(bar.get_xticklabels(), rotation=60)
     plt.ylabel(ylabel)
     plt.title(title)
     plt.tight_layout()
     plt.show()
 
-def plot_fold_change(df_change, samples = [], metabolites = [], title = '', ylabel=''):
+
+def plot_fold_change(df_change, samples=[], metabolites=[], title='', ylabel=''):
     """Generate a bar plot with log 2 fold change values for comparison between samples.
 
     Parameters
@@ -76,6 +81,7 @@ def plot_fold_change(df_change, samples = [], metabolites = [], title = '', ylab
     plt.tight_layout()
     plt.show()
 
+
 def plot_fold_change_heatmap(df_change, samples=[], metabolites=[], title='', annotate=True):
     """Generate a heatmap from DataFrame with IDs and intensity values per sample
 
@@ -98,7 +104,8 @@ def plot_fold_change_heatmap(df_change, samples=[], metabolites=[], title='', an
         df_change = df_change[samples]
     if metabolites:
         df_change = df_change.loc[metabolites]
-    chart = sns.heatmap(df_change, xticklabels=df_change.columns , yticklabels=df_change.index, cmap='bwr', annot=annotate)
+    chart = sns.heatmap(df_change, xticklabels=df_change.columns,
+                        yticklabels=df_change.index, cmap='bwr', annot=annotate)
 
     chart.set_xticklabels(chart.get_xticklabels(), rotation=45)
 
