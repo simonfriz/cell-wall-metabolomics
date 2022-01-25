@@ -1,6 +1,6 @@
-from .processing import *
-from .analysis import *
-from .visualization import *
+from src.processing import *
+from src.analysis import *
+from src.visualization import *
 
 
 def id_by_mz(mzML_directory, polarity, remove_qbic=True):
@@ -52,8 +52,6 @@ def id_by_mz(mzML_directory, polarity, remove_qbic=True):
                 "report_convex_hulls": "true",
             },
         )
-
-        fm = filter_feature_map(fm, q=0.001)
 
         fms.append(fm)
 
@@ -149,6 +147,13 @@ def id_by_mz_and_rt(
             plotDetectedFeatures3D(fm, title=mzML_file[:-5])
 
         fm = filter_feature_map(fm, 0.0)
+
+        df = fm.get_df()[['mz', 'RT', 'intensity']]
+
+        df['id'] = [f.getMetaValue('label') for f in fm]
+
+        print(mzML_file[:-5])
+        print(df)
 
         fms.append(fm)
 
