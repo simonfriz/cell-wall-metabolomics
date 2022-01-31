@@ -78,14 +78,19 @@ def id_by_mz(mzML_directory, polarity, remove_qbic=True):
             "mass_error_value": 5.0,  # default: 5
         },
     )
-
     cm_df = cm.get_df()
     cm_df = filter_df(cm_df, 0)
 
     df = annotate_cm_df(cm_df, ams_df)
 
+    print('before metabolite grouping:')
+    print(df[df['adduct'] != ''])
+
     df = group_metabolites_ams(df)
 
+    print('after metabolite grouping:')
+    print(df)
+    
     if remove_qbic:
         df.columns = ["_".join(c.split("_")[1:]) for c in df.columns]
 

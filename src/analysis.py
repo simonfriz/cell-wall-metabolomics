@@ -35,9 +35,19 @@ def annotate_cm_df(cm_df, ams_df, keep_unidentified=False):
             np.isclose(cm_df["mz"], float(ams_mz), atol=1e-05)
             & np.isclose(cm_df["RT"], float(ams_rt), atol=1e-05)
         ].tolist()
+
+        
         for index in indices:
-            cm_df.loc[index, "id"] += ams_name + ";"
-            cm_df.loc[index, "adduct"] += ams_adduct.split(";")[0] + ";"
+            if ams_name != 'null':
+                cm_df.loc[index, "id"] += ams_name + ";"
+            if ams_adduct != "null":
+                cm_df.loc[index, "adduct"] += (
+                    "["
+                    + ams_adduct.split(";")[0]
+                    + "]"
+                    + ams_adduct.split(";")[1]
+                    + ";"
+                )
     # remove last : from ids and adducts
     cm_df["id"] = [item[:-1] if ";" in item else "" for item in cm_df["id"]]
     cm_df["adduct"] = [item[:-1] if ";" in item else "" for item in cm_df["adduct"]]
@@ -105,7 +115,13 @@ def group_metabolites_ffmid(fms):
     dfs = []
     for fm in fms:
         df = fm.get_df()[["intensity"]]
-        df = df.rename(columns={"intensity": os.path.basename(fm.getMetaValue('spectra_data')[0].decode())[:-5]})
+        df = df.rename(
+            columns={
+                "intensity": os.path.basename(
+                    fm.getMetaValue("spectra_data")[0].decode()
+                )[:-5]
+            }
+        )
         df.index = [f.getMetaValue("label").split("#")[0] for f in fm]
         df = df.groupby(df.index).sum()
         dfs.append(df)
