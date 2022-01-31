@@ -37,9 +37,7 @@ def annotate_cm_df(cm_df, ams_df, keep_unidentified=False):
         ].tolist()
         for index in indices:
             cm_df.loc[index, "id"] += ams_name + ";"
-            cm_df.loc[index, "adduct"] += (
-                "[" + ams_adduct.split(";")[0] + "]" + ams_adduct.split(";")[1] + ";"
-            )
+            cm_df.loc[index, "adduct"] += ams_adduct.split(";")[0] + ";"
     # remove last : from ids and adducts
     cm_df["id"] = [item[:-1] if ";" in item else "" for item in cm_df["id"]]
     cm_df["adduct"] = [item[:-1] if ";" in item else "" for item in cm_df["adduct"]]
