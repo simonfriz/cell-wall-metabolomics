@@ -220,10 +220,10 @@ def get_mean_std_change_df(df, sample_pairs):
     df_mean = pd.DataFrame(index=df.index)
     df_std = pd.DataFrame(index=df.index)
     df_change = pd.DataFrame(index=df.index)
-
+    
+    # replicate numbers should be at the end of the file name separated with # (e.g. samplename#1)
     for name in [sample for sample_pair in sample_pairs for sample in sample_pair]:
-        # add _ to name to exclue wrong matches (eg. C_C would matach C_C_1, C_C_2, C_CF_1, C_CF_2)
-        replicates = [c for c in df.columns if name + "_" in c]
+        replicates = [c for c in df.columns if c.startswith(name + "#")]
         df_mean[name] = df[replicates].mean(axis=1)
         df_std[name] = df[replicates].std(axis=1)
 
